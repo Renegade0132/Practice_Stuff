@@ -12,6 +12,7 @@
 #include "Engine/SkeletalMeshSocket.h"
 #include "Sound/SoundCue.h"
 #include "Animation/AnimInstance.h"
+
 #include "TimerManager.h"
 
 
@@ -198,7 +199,7 @@ void AEnemy::MoveToTarget(AMainCharacter* Target)
 
 		for (auto Point : PathPoints) {
 
-			FVector Location = Point.Location;
+			FVector Location = Point.Location;   
 
 			UKismetSystemLibrary::DrawDebugSphere(this, Location, 25.f, 8, FLinearColor::Red, 15.f, 1.f);
 		}*/
