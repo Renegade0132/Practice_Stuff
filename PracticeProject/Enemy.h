@@ -12,6 +12,7 @@ enum class EEnemyMovementStatus : uint8
 	EMS_Idle			UMETA(DisplayName = "Idle"),
 	EMS_MoveToTarget	UMETA(DisplayName = "MoveToTarget"),
 	EMS_Attacking		UMETA(DisplayName = "Attacking"),
+	EMS_Dead			UMETA(DisplayName = "Dead"),
 
 	EMS_MAX				UMETA(DisplayName = "DefaultMAX")
 };
@@ -35,7 +36,11 @@ public:
 	USphereComponent* CombatSphere;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AI")
-	class UBoxComponent* AttackCollision;
+	class UBoxComponent* LeftAttackCollision;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AI")
+	class UBoxComponent* RightAttackCollision;
+
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	class AAIController* AIController;
@@ -66,12 +71,15 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	float Damage;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Combat")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
 	class UAnimMontage* CombatMontage;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
 	bool bAttacking;
 
+
+	TArray<int32> Sections;
+	int SectionsLenght;
 
 	FTimerHandle AttackTimer;
 
@@ -83,6 +91,14 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
 	TSubclassOf<UDamageType> DamageTypeClass;
+
+	FTimerHandle AfterDeathTimer;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	float DeathDelay;
+	
+	bool bHasValidTarget;
+
 
 protected:
 	// Called when the game starts or when spawned
@@ -111,27 +127,54 @@ public:
 	void MoveToTarget(class AMainCharacter* Target);
 
 	UFUNCTION()
-	void AttackOnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	void LeftAttackOnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	UFUNCTION()
-	void AttackOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+	void LeftAttackOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	UFUNCTION()
+	void RightAttackOnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void RightAttackOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
 	FORCEINLINE void SetEnemyMovementStatus(EEnemyMovementStatus Status)
 	{
 		EnemyMovementStatus = Status;
 	}
 
-	UFUNCTION(BlueprintCallable)
-	void ActivateCollision();
+	FORCEINLINE EEnemyMovementStatus GetEnemyMovementStatus() {
+		return EnemyMovementStatus;
+	}
 
 	UFUNCTION(BlueprintCallable)
-	void DeactivateCollision();
+	void ActivateLeftCollision();
 
+	UFUNCTION(BlueprintCallable)
+	void DeactivateLeftCollision();
+
+	UFUNCTION(BlueprintCallable)
+	void ActivateRightCollision();
+
+	UFUNCTION(BlueprintCallable)
+	void DeactivateRightCollision();
 
 	void Attack();
+
+	void Die(AActor* Causer);
+
+	UFUNCTION(BlueprintCallable)
+	void DeathEnd();
 
 	UFUNCTION(BlueprintCallable)
 	void AttackEnd();
 
-	
+	bool Alive();
+
+	void Disappear();
+
+	int32 GetSectionsByIndex(int32 idx) { return Sections[idx]; }
+	int GetSectionsLength() { return SectionsLenght; }
 };

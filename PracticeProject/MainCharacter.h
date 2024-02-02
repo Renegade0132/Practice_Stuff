@@ -9,21 +9,22 @@
 UENUM(BlueprintType)
 enum class EMovementStatus : uint8
 {
-	EMS_Normal UMETA(DisplayName = "Normal"),
-	EMS_Sprinting UMETA(DisplayName = "Sprinting"),
+	EMS_Normal				UMETA(DisplayName = "Normal"),
+	EMS_Sprinting			UMETA(DisplayName = "Sprinting"),
+	EMS_Dead				UMETA(DisplayName = "Dead"),
 
-	EMS_MAX UMETA(DisplayName = "DefaultMAX")
+	EMS_MAX					UMETA(DisplayName = "DefaultMAX")
 };
 
 UENUM(BlueprintType)
 enum class EStaminaStatus : uint8
 {
-	ESS_Normal UMETA(Display = "Normal"),
-	ESS_BelowMinimum UMETA(Display = "BelowMinimum"),
-	ESS_Exhausted UMETA(Display = "Exhausted"),
+	ESS_Normal				UMETA(Display = "Normal"),
+	ESS_BelowMinimum		UMETA(Display = "BelowMinimum"),
+	ESS_Exhausted			UMETA(Display = "Exhausted"),
 	ESS_ExhaustedRecovering UMETA(Display = "ExhaustedRecovering"),
 
-	ESS_MAX UMETA(Display = "DefaultMax")
+	ESS_MAX					UMETA(Display = "DefaultMax")
 };
 
 
@@ -35,6 +36,27 @@ class PRACTICEPROJECT_API AMainCharacter : public ACharacter
 public:
 	// Sets default values for this character's properties
 	AMainCharacter();
+
+	UPROPERTY(EditDefaultsOnly, Category="SaveData")
+	TSubclassOf<class AItemStorage> WeaponStorage;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	bool bHasCombatTarget;
+
+	FORCEINLINE void SetHasCombatTarget(bool HasTarget) {
+		bHasCombatTarget = HasTarget;
+	}
+
+	void UpdateCombatTarget();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat")
+	TSubclassOf<class AEnemy> EnemyFilter;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Combat")
+	FVector CombatTargetLocation;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Controller")
+	class AMainPlayerController* MainPlayerController;
 
 	TArray<FVector> PickupLocations;
 
@@ -66,7 +88,7 @@ public:
 	class USoundCue* HitSound;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
-	class AEnemy* CombatTarget;
+	AEnemy* CombatTarget;
 	/**
 	
 	
@@ -111,6 +133,8 @@ public:
 
 	bool bInterpToEnemy;
 
+
+
 	/** Weapon variable */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Items")
 	class AWeapon* EquippedWeapon;
@@ -121,11 +145,16 @@ public:
 	/** Related to weapon equiping */
 	bool bUseDown;
 
+	// Pause Menu Related
+	bool bESCDown;
+
+
 	/** Related to attacking */
 	bool bAttackDown;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Anims")
 	bool bAttacking;
+
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Anims")
 	class UAnimMontage* CombatMontage;
@@ -147,6 +176,10 @@ public:
 	/** Called for side to side input */
 	void MoveRight(float value);
 
+	bool bMovingForward;
+	bool bMovingRight;
+
+	bool CanMove(float value);
 	/** Called via input to turn at a given rate
 		@param Rate This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
 	*/
@@ -162,18 +195,29 @@ public:
 	void UseDown();
 
 	void UseUp();
+	
+	void ESCDown();
+
+	void ESCUp();
 
 	/** Health and Stamina changing functions */
-	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const & DamageEvent, class AController *EventInstigator, AActor * DamageCauser) override;
-
 	void DecrementHealth(float Amount);
 	
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const & DamageEvent, class AController *EventInstigator, AActor *DamageCauser) override;
+
+	UFUNCTION(BlueprintCallable)
 	void IncrementHealth(float Amount);
 
+	UFUNCTION(BlueprintCallable)
 	void IncrementCoins(int32 Amount);
 
 	/** Called when the character dies*/
-	void Die();
+	void Die(); 
+
+	virtual void Jump() override;	
+
+	UFUNCTION(BlueprintCallable)
+	void DeathEnd();
 
 	/** Set Movement status and running speed */
 	void SetMovementStatus(EMovementStatus Status);
@@ -202,8 +246,17 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void PlaySwingSound();
 
-
 	FRotator GetLookAtRotationYaw(FVector Target);
+
+	void SwitchLevel(FName LevelName);
+
+	UFUNCTION(BlueprintCallable)
+	void SaveGame();
+
+	UFUNCTION(BlueprintCallable)
+	void LoadGame(bool SetPosition);
+
+	void LoadGameNoSwitch();
 
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const
 	{
@@ -236,4 +289,6 @@ public:
 	{
 		CombatTarget = Target;
 	}
+
+
 };
