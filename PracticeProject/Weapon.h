@@ -27,6 +27,9 @@ public:
 	
 	AWeapon();
 
+	UPROPERTY(EditDefaultsOnly, Category = "SaveData")
+	FString WeaponName;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Item")
 	EWeaponState WeaponState;
 
@@ -42,7 +45,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item | Combat")
 	class UBoxComponent* CombatCollision;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item | Combat")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Item | Combat")
 	float Damage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item | Sounds")
@@ -73,6 +76,16 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void DeactivateCollision();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	TSubclassOf<UDamageType> DamageTypeClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
+	AController* WeaponInstigator;
+
+	FORCEINLINE void SetInstigator(AController* Inst)
+	{
+		WeaponInstigator = Inst;
+	}
 
 	FORCEINLINE void SetWeaponState(EWeaponState State)
 	{
